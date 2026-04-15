@@ -155,7 +155,8 @@
 // ============== CONFIGURATION ==============
 const urlParams = new URLSearchParams(window.location.search);
 const subjectId = "current";   // ← CHANGE THIS for each subject
-const subjectName = urlParams.get('subjectName') || 'Current Affair':
+const subjectName = urlParams.get('subjectName') || 'Current Affair';
+
 document.getElementById('subject-title').textContent = subjectName;
 
 let currentChapterId = null;
@@ -487,4 +488,4 @@ async function executeManageAction() {
 window.onload = loadData;
 </script>
 </body>
-</html>
+                                                      </html>
