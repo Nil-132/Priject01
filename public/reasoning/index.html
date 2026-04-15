@@ -8,13 +8,12 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; }
+    .chapter-item:hover { background-color: #f8fafc; }
+    .active-chapter { background-color: #f0f9ff; border-left: 4px solid #3b82f6; }
     .lecture-card { transition: all 0.3s ease; }
     .lecture-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
 
-    /* Mobile Sidebar Animation */
-    .sidebar {
-      transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-    }
+    /* Mobile Sidebar */
     @media (max-width: 768px) {
       .sidebar {
         position: fixed;
@@ -23,20 +22,19 @@
         bottom: 0;
         z-index: 100;
         width: 280px;
-        box-shadow: 4px 0 15px rgba(0,0,0,0.2);
+        box-shadow: 4px 0 15px rgba(0,0,0,0.15);
+        transition: transform 0.4s ease;
       }
       .sidebar.open {
         transform: translateX(280px);
       }
-      .main-content { padding-bottom: 20px; }
     }
   </style>
 </head>
 <body class="bg-gray-50">
 
-<!-- Overlay for mobile menu -->
-<div id="overlay" onclick="toggleSidebar()" 
-     class="hidden fixed inset-0 bg-black/50 z-50 md:hidden"></div>
+<!-- Overlay for mobile -->
+<div id="overlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-black/50 z-50 md:hidden"></div>
 
 <div class="flex h-screen overflow-hidden">
 
@@ -44,9 +42,7 @@
   <div class="sidebar w-72 bg-white border-r border-gray-200 overflow-y-auto" id="sidebar">
     <div class="p-6">
       <div class="flex justify-between items-center mb-8 md:hidden">
-        <a href="/subjects.html" class="flex items-center gap-2 text-xl font-semibold text-gray-800">
-          ← Subjects
-        </a>
+        <a href="/subjects.html" class="flex items-center gap-2 text-xl font-semibold text-gray-800">← Subjects</a>
         <button onclick="toggleSidebar()" class="text-2xl text-gray-500">
           <i class="fa-solid fa-xmark"></i>
         </button>
@@ -58,9 +54,8 @@
   </div>
 
   <!-- Main Content -->
-  <div class="flex-1 flex flex-col overflow-hidden main-content">
-    <!-- Top Bar -->
-    <div class="bg-white border-b px-4 py-4 flex items-center justify-between">
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="bg-white border-b px-4 md:px-8 py-5 flex justify-between items-center">
       <div class="flex items-center gap-3">
         <!-- Hamburger Menu -->
         <button onclick="toggleSidebar()" class="md:hidden text-3xl text-gray-700">
@@ -68,7 +63,7 @@
         </button>
         <h1 class="text-2xl font-semibold" id="subject-title">All Classes</h1>
       </div>
-
+      
       <button onclick="showManageModal()" 
               class="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-medium">
         <i class="fa-solid fa-plus"></i> Manage
@@ -76,7 +71,7 @@
     </div>
 
     <!-- Search + Filters -->
-    <div class="bg-white border-b px-4 py-4 flex gap-4 items-center">
+    <div class="bg-white border-b px-4 md:px-8 py-4 flex gap-4 items-center">
       <div class="relative flex-1">
         <input type="text" id="search-input" placeholder="Search lectures by title..." 
                onkeyup="applyFilters()" 
@@ -95,8 +90,8 @@
   </div>
 </div>
 
-<!-- Manage Modal -->
-<div id="manage-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+<!-- Manage Modal (Full original design) -->
+<div id="manage-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
   <div class="bg-white rounded-3xl p-8 w-full max-w-lg mx-4">
     <h2 class="text-2xl font-semibold mb-6">Manage Content</h2>
     
@@ -139,8 +134,8 @@
 </div>
 
 <!-- Admin Login Modal -->
-<div id="loginModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4">
-  <div class="bg-white rounded-3xl p-8 w-full max-w-sm">
+<div id="loginModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
+  <div class="bg-white rounded-3xl p-8 w-full max-w-sm mx-4">
     <h3 class="text-xl font-semibold mb-4">Admin Login</h3>
     <p class="text-gray-600 mb-6">Default Password: <strong>admin123</strong></p>
     <input type="password" id="adminPass" placeholder="Enter password" class="w-full border border-gray-300 rounded-2xl px-5 py-4 mb-6">
@@ -154,8 +149,8 @@
 <script>
 // ============== CONFIGURATION ==============
 const urlParams = new URLSearchParams(window.location.search);
-const subjectId = "reasoning";   // ← CHANGE THIS
-const subjectName = urlParams.get('subjectName') || 'Reasoning';
+const subjectId = "reasoning";   // ← CHANGE THIS for each subject
+const subjectName = urlParams.get('subjectName') || 'Reasoning Ability';
 
 document.getElementById('subject-title').textContent = subjectName;
 
@@ -209,7 +204,7 @@ function renderSidebar(chapters) {
     div.textContent = ch.title;
     div.onclick = () => {
       selectChapter(ch._id);
-      if (window.innerWidth < 768) toggleSidebar(); // Close sidebar on mobile after selection
+      if (window.innerWidth < 768) toggleSidebar();
     };
     container.appendChild(div);
   });
@@ -229,28 +224,28 @@ function renderLectures(lectures) {
     const isCompleted = lec.completed === true;
 
     html += `
-      <div class="lecture-card bg-white rounded-3xl p-5 flex gap-4 border border-gray-100 mb-5">
-        <img src="${imageUrl}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0">
+      <div class="lecture-card bg-white rounded-3xl p-6 flex gap-5 border border-gray-100 mb-6">
+        <img src="${imageUrl}" class="w-20 h-20 rounded-xl object-cover">
         <div class="flex-1">
           <div class="flex justify-between items-start">
             <div>
-              <span class="text-xs text-gray-500">${lec.date || 'N/A'} • ${lec.duration || '45m'}</span>
-              <h3 class="font-semibold text-base mt-1 line-clamp-2">${lec.title}</h3>
+              <span class="text-xs text-gray-500">Lecture • ${lec.date || 'N/A'}</span>
+              <h3 class="font-semibold text-lg mt-1">${lec.title}</h3>
+              <p class="text-sm text-gray-600">${lec.duration || '45m'}</p>
             </div>
             <button onclick="markLectureComplete('${lec._id}')" 
-                    class="w-9 h-9 flex items-center justify-center rounded-full border-2 flex-shrink-0
+                    class="w-10 h-10 flex items-center justify-center rounded-full border-2 flex-shrink-0
                            ${isCompleted ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-green-500 hover:bg-green-50'}">
-              ${isCompleted ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-check text-gray-400"></i>'}
+              ${isCompleted ? '<i class="fa-solid fa-check text-2xl"></i>' : '<i class="fa-solid fa-check text-2xl text-gray-400"></i>'}
             </button>
           </div>
-
-          <div class="flex gap-3 mt-5">
+          <div class="flex gap-3 mt-6">
             <button onclick="playVideo('${lec.youtubeId || ''}')" 
-                    class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-2xl text-sm font-medium flex items-center justify-center gap-2">
+                    class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-medium flex items-center justify-center gap-2">
               <i class="fa-solid fa-play"></i> Watch
             </button>
             <button onclick="alert('Notes feature coming soon')" 
-                    class="flex-1 border border-gray-300 hover:bg-gray-50 py-2.5 rounded-2xl text-sm font-medium">
+                    class="flex-1 border border-gray-300 hover:bg-gray-50 px-6 py-3 rounded-2xl text-sm font-medium">
               Notes & more
             </button>
           </div>
@@ -307,7 +302,7 @@ function selectChapter(chapterId) {
   loadData();
 }
 
-// ============== MANAGE MODAL FUNCTIONS (unchanged) ==============
+// Manage Modal Functions (kept as original)
 function showManageModal() {
   if (!isAdmin) {
     document.getElementById('loginModal').classList.remove('hidden');
