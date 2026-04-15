@@ -2,87 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>All Classes - My PW</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    body { 
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; 
-    }
-    
+    body { font-family: system-ui, -apple-system, sans-serif; }
     .chapter-item:hover { background-color: #f8fafc; }
     .active-chapter { 
-      background-color: #f0f9ff; 
+      background-color: #e0f2fe; 
       border-left: 4px solid #3b82f6; 
+      border-radius: 12px;
+      font-weight: 600;
     }
-    
-    .lecture-card { 
-      transition: all 0.3s ease; 
-    }
-    .lecture-card:hover { 
-      transform: translateY(-2px); 
-      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); 
-    }
+    .lecture-card { transition: all 0.3s ease; }
+    .lecture-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
 
-    /* Mobile Improvements */
+    /* Mobile Sidebar */
+    .sidebar {
+      transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    }
     @media (max-width: 768px) {
-      .modal-content {
-        margin: 1rem;
-        max-height: 90vh;
-        overflow-y: auto;
-      }
       .sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
+        position: fixed;
+        left: -280px;
+        top: 0;
+        bottom: 0;
+        z-index: 100;
+        width: 280px;
+        box-shadow: 4px 0 15px rgba(0,0,0,0.15);
       }
       .sidebar.open {
-        transform: translateX(0);
+        transform: translateX(280px);
       }
     }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50">
 
-<!-- Top Navbar (Mobile) -->
-<div class="md:hidden bg-white border-b sticky top-0 z-50">
-  <div class="px-4 py-4 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <button onclick="toggleSidebar()" class="text-2xl text-gray-700">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <h1 class="text-xl font-semibold" id="mobile-subject-title">All Classes</h1>
-    </div>
-    <button onclick="showManageModal()" 
-            class="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-2xl text-sm font-medium">
-      <i class="fa-solid fa-plus"></i> Manage
-    </button>
-  </div>
-</div>
+<!-- Overlay -->
+<div id="overlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-black/50 z-50 md:hidden"></div>
 
 <div class="flex h-screen overflow-hidden">
 
   <!-- Sidebar -->
-  <div id="sidebar" class="sidebar w-72 bg-white border-r border-gray-200 overflow-y-auto md:relative absolute inset-y-0 left-0 z-50 md:translate-x-0">
-    <div class="p-6 md:pt-8">
-      <a href="/subjects.html" class="flex items-center gap-2 text-lg font-semibold text-gray-800 mb-6">
+  <div class="sidebar w-72 bg-white border-r border-gray-200 overflow-y-auto" id="sidebar">
+    <div class="p-6">
+      <!-- Back Button -->
+      <a href="/subjects.html" class="flex items-center gap-2 text-xl font-semibold text-gray-800 hover:text-blue-600 mb-8">
         ← Subjects
       </a>
-      
-      <div class="text-xs font-medium text-gray-500 mb-3 px-3">CHAPTERS</div>
-      <div id="sidebar-content" class="px-3 space-y-0.5"></div>
+
+      <div class="px-6 py-4 text-xs font-medium text-gray-500">CHAPTERS</div>
+      <div class="px-3 space-y-0.5" id="chapters-list"></div>
     </div>
   </div>
 
-  <!-- Overlay for mobile -->
-  <div id="overlay" onclick="toggleSidebar()" class="md:hidden hidden fixed inset-0 bg-black/50 z-40"></div>
-
   <!-- Main Content -->
   <div class="flex-1 flex flex-col overflow-hidden">
-
-    <!-- Desktop Header -->
-    <div class="hidden md:flex bg-white border-b px-8 py-5 justify-between items-center">
-      <h1 class="text-2xl font-semibold" id="subject-title">All Classes</h1>
+    <div class="bg-white border-b px-4 md:px-8 py-5 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <!-- Hamburger Menu -->
+        <button onclick="toggleSidebar()" class="md:hidden text-3xl text-gray-700">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <h1 class="text-2xl font-semibold" id="subject-title">All Classes</h1>
+      </div>
+      
       <button onclick="showManageModal()" 
               class="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-medium">
         <i class="fa-solid fa-plus"></i> Manage
@@ -90,16 +76,15 @@
     </div>
 
     <!-- Search + Filters -->
-    <div class="bg-white border-b px-4 md:px-8 py-4 flex flex-col md:flex-row gap-3 md:items-center">
+    <div class="bg-white border-b px-4 md:px-8 py-4 flex gap-4 items-center">
       <div class="relative flex-1">
-        <input type="text" id="search-input" placeholder="Search lectures..." 
+        <input type="text" id="search-input" placeholder="Search lectures by title..." 
                onkeyup="applyFilters()" 
-               class="w-full border border-gray-300 rounded-2xl px-5 py-3.5 pl-12 focus:outline-none focus:border-blue-500 text-base">
+               class="w-full border border-gray-300 rounded-2xl px-5 py-3 pl-12 focus:outline-none focus:border-blue-500">
         <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
       </div>
-      
       <select id="filter-select" onchange="applyFilters()" 
-              class="border border-gray-300 rounded-2xl px-5 py-3.5 focus:outline-none w-full md:w-auto">
+              class="border border-gray-300 rounded-2xl px-5 py-3 focus:outline-none">
         <option value="all">All Lectures</option>
         <option value="completed">Completed</option>
         <option value="pending">Not Completed</option>
@@ -110,20 +95,21 @@
   </div>
 </div>
 
-<!-- Manage Modal -->
-<div id="manage-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4">
-  <div class="modal-content bg-white rounded-3xl p-6 md:p-8 w-full max-w-lg">
+<!-- Manage Modal (Full original) -->
+<div id="manage-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+  <div class="bg-white rounded-3xl p-8 w-full max-w-lg mx-4">
     <h2 class="text-2xl font-semibold mb-6">Manage Content</h2>
     
-    <div class="grid grid-cols-2 gap-3 mb-8">
-      <button onclick="setManageMode(1)" id="btn1" class="manage-btn py-4 border-2 border-blue-600 text-blue-600 rounded-2xl font-medium">Add Chapter</button>
+    <div class="grid grid-cols-2 gap-4 mb-8">
+      <button onclick="setManageMode(1)" id="btn1" class="manage-btn py-4 border-2 border-blue-600 text-blue-600 rounded-2xl font-medium manage-btn-active">Add Chapter</button>
       <button onclick="setManageMode(2)" id="btn2" class="manage-btn py-4 border border-gray-300 rounded-2xl font-medium">Add Lecture</button>
       <button onclick="setManageMode(3)" id="btn3" class="manage-btn py-4 border border-gray-300 rounded-2xl font-medium">Delete Chapter</button>
       <button onclick="setManageMode(4)" id="btn4" class="manage-btn py-4 border border-gray-300 rounded-2xl font-medium">Delete Lecture</button>
     </div>
 
-    <!-- Forms remain same as your original -->
-    <div id="form1"><input id="chapter-title" type="text" placeholder="New Chapter Title" class="w-full border border-gray-300 rounded-2xl px-5 py-4"></div>
+    <div id="form1">
+      <input id="chapter-title" type="text" placeholder="New Chapter Title" class="w-full border border-gray-300 rounded-2xl px-5 py-4 text-lg">
+    </div>
 
     <div id="form2" class="hidden space-y-4">
       <select id="lecture-chapter-select" class="w-full border border-gray-300 rounded-2xl px-5 py-4"></select>
@@ -145,16 +131,16 @@
       <select id="delete-lecture-select" class="w-full border border-gray-300 rounded-2xl px-5 py-4"></select>
     </div>
 
-    <div class="flex gap-4 mt-10">
+    <div class="flex gap-4 mt-8">
       <button onclick="hideManageModal()" class="flex-1 py-4 border border-gray-300 rounded-2xl font-medium">Cancel</button>
-      <button onclick="executeManageAction()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-semibold">Confirm</button>
+      <button onclick="executeManageAction()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-semibold">Confirm Action</button>
     </div>
   </div>
 </div>
 
-<!-- Admin Login Modal (Same as before but improved) -->
-<div id="loginModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[110] p-4">
-  <div class="bg-white rounded-3xl p-8 w-full max-w-sm">
+<!-- Admin Login Modal -->
+<div id="loginModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
+  <div class="bg-white rounded-3xl p-8 w-full max-w-sm mx-4">
     <h3 class="text-xl font-semibold mb-4">Admin Login</h3>
     <p class="text-gray-600 mb-6">Default Password: <strong>admin123</strong></p>
     <input type="password" id="adminPass" placeholder="Enter password" class="w-full border border-gray-300 rounded-2xl px-5 py-4 mb-6">
@@ -168,11 +154,10 @@
 <script>
 // ============== CONFIGURATION ==============
 const urlParams = new URLSearchParams(window.location.search);
-const subjectId = "english";
+const subjectId = "english";   // ← CHANGE THIS for each subject
 const subjectName = urlParams.get('subjectName') || 'English';
 
 document.getElementById('subject-title').textContent = subjectName;
-document.getElementById('mobile-subject-title').textContent = subjectName;
 
 let currentChapterId = null;
 let manageMode = 1;
@@ -180,7 +165,7 @@ let token = null;
 let isAdmin = false;
 let allLectures = [];
 
-// ============== Mobile Sidebar ==============
+// Toggle Sidebar (Hamburger Menu)
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('overlay');
@@ -188,16 +173,7 @@ function toggleSidebar() {
   overlay.classList.toggle('hidden');
 }
 
-// Close sidebar when clicking a chapter on mobile
-function selectChapter(chapterId) {
-  currentChapterId = chapterId;
-  document.getElementById('search-input').value = '';
-  document.getElementById('filter-select').value = 'all';
-  if (window.innerWidth < 768) toggleSidebar(); // Close sidebar on mobile
-  loadData();
-}
-
-// ============== REST OF YOUR SCRIPT (Slightly optimized) ==============
+// ============== LOAD DATA ==============
 async function loadData() {
   try {
     const chaptersRes = await fetch(`/api/chapters?subjectId=${subjectId}`);
@@ -223,41 +199,43 @@ async function loadData() {
 }
 
 function renderSidebar(chapters) {
-  const container = document.getElementById('sidebar-content');
-  let html = '';
+  const container = document.getElementById('chapters-list') || document.createElement('div');
+  container.innerHTML = '';
 
   chapters.forEach(ch => {
     const active = ch._id === currentChapterId ? 'active-chapter' : 'chapter-item';
-    html += `
-      <div class="${active} px-4 py-3.5 text-sm cursor-pointer rounded-xl" 
-           onclick="selectChapter('${ch._id}')">
-        ${ch.title}
-      </div>`;
+    const div = document.createElement('div');
+    div.className = `${active} px-4 py-3 text-sm cursor-pointer hover:bg-gray-100 rounded-xl`;
+    div.textContent = ch.title;
+    div.onclick = () => {
+      selectChapter(ch._id);
+      if (window.innerWidth < 768) toggleSidebar(); // close on mobile
+    };
+    container.appendChild(div);
   });
-
-  container.innerHTML = html;
 }
 
 function renderLectures(lectures) {
   const container = document.getElementById('main-content');
+  let html = '';
+
   if (lectures.length === 0) {
     container.innerHTML = `<p class="text-center text-gray-500 py-20">No lectures found.</p>`;
     return;
   }
 
-  let html = '';
   lectures.forEach(lec => {
     const imageUrl = lec.imageUrl || "https://via.placeholder.com/80x80/1f2937/ffffff?text=Instructor";
     const isCompleted = lec.completed === true;
 
     html += `
-      <div class="lecture-card bg-white rounded-3xl p-5 flex gap-4 border border-gray-100 mb-6">
+      <div class="lecture-card bg-white rounded-3xl p-5 flex gap-4 border border-gray-100 mb-5">
         <img src="${imageUrl}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0">
-        <div class="flex-1 min-w-0">
+        <div class="flex-1">
           <div class="flex justify-between items-start">
-            <div class="flex-1">
+            <div>
               <span class="text-xs text-gray-500">${lec.date || 'N/A'} • ${lec.duration || '45m'}</span>
-              <h3 class="font-semibold text-base mt-1 line-clamp-2 pr-2">${lec.title}</h3>
+              <h3 class="font-semibold text-base mt-1 line-clamp-2">${lec.title}</h3>
             </div>
             <button onclick="markLectureComplete('${lec._id}')" 
                     class="w-9 h-9 flex items-center justify-center rounded-full border-2 flex-shrink-0
@@ -266,14 +244,14 @@ function renderLectures(lectures) {
             </button>
           </div>
 
-          <div class="flex gap-3 mt-6">
+          <div class="flex gap-3 mt-5">
             <button onclick="playVideo('${lec.youtubeId || ''}')" 
-                    class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl text-sm font-medium flex items-center justify-center gap-2">
-              <i class="fa-solid fa-play"></i> Watch Video
+                    class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-2xl text-sm font-medium flex items-center justify-center gap-2">
+              <i class="fa-solid fa-play"></i> Watch
             </button>
             <button onclick="alert('Notes feature coming soon')" 
-                    class="flex-1 border border-gray-300 hover:bg-gray-50 py-3 rounded-2xl text-sm font-medium">
-              Notes
+                    class="flex-1 border border-gray-300 hover:bg-gray-50 py-2.5 rounded-2xl text-sm font-medium">
+              Notes & more
             </button>
           </div>
         </div>
@@ -282,9 +260,6 @@ function renderLectures(lectures) {
 
   container.innerHTML = html;
 }
-
-// Keep all your other functions (applyFilters, playVideo, markLectureComplete, manage modal functions, etc.)
-// ... [Your original functions from applyFilters to executeManageAction remain unchanged]
 
 function applyFilters() {
   const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
@@ -306,8 +281,210 @@ function playVideo(videoId) {
   window.open(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`, '_blank');
 }
 
-// ... (Rest of your original script: adminLogin, showManageModal, setManageMode, etc. remain the same)
+async function markLectureComplete(lectureId) {
+  if (!token) {
+    alert("Please login as Admin first.");
+    return;
+  }
+  try {
+    await fetch(`/api/lectures/${lectureId}/complete`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    loadData();
+  } catch (err) {
+    alert("Server error");
+  }
+}
 
+function selectChapter(chapterId) {
+  currentChapterId = chapterId;
+  document.getElementById('search-input').value = '';
+  document.getElementById('filter-select').value = 'all';
+  loadData();
+}
+
+// ============== MANAGE MODAL ==============
+function showManageModal() {
+  if (!isAdmin) {
+    document.getElementById('loginModal').classList.remove('hidden');
+    return;
+  }
+  manageMode = 1;
+  document.getElementById('manage-modal').classList.remove('hidden');
+  updateManageUI();
+}
+
+function hideManageModal() {
+  document.getElementById('manage-modal').classList.add('hidden');
+}
+
+function hideLoginModal() {
+  document.getElementById('loginModal').classList.add('hidden');
+}
+
+async function adminLogin() {
+  const password = document.getElementById('adminPass').value.trim();
+  if (!password) return alert("Please enter password");
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      token = data.token;
+      isAdmin = true;
+      hideLoginModal();
+      alert('✅ Admin Login Successful!');
+      showManageModal();
+    } else {
+      alert('❌ Wrong Password');
+    }
+  } catch (e) {
+    alert('Cannot connect to server.');
+  }
+}
+
+function setManageMode(mode) {
+  manageMode = mode;
+  updateManageUI();
+}
+
+function updateManageUI() {
+  for (let i = 1; i <= 4; i++) {
+    const btn = document.getElementById(`btn${i}`);
+    if (btn) btn.classList.remove('manage-btn-active');
+  }
+  document.getElementById(`btn${manageMode}`).classList.add('manage-btn-active');
+
+  for (let i = 1; i <= 4; i++) {
+    const form = document.getElementById(`form${i}`);
+    if (form) form.classList.toggle('hidden', i !== manageMode);
+  }
+
+  if (manageMode === 2) populateLectureChapterSelect();
+  if (manageMode === 3) populateDeleteChapterSelect();
+  if (manageMode === 4) populateDeleteLectureChapterSelect();
+}
+
+async function populateLectureChapterSelect() {
+  const select = document.getElementById('lecture-chapter-select');
+  select.innerHTML = '<option value="">Select Chapter</option>';
+  try {
+    const res = await fetch(`/api/chapters?subjectId=${subjectId}`);
+    const chapters = await res.json();
+    chapters.forEach(ch => {
+      const opt = document.createElement('option');
+      opt.value = ch._id;
+      opt.textContent = ch.title;
+      select.appendChild(opt);
+    });
+  } catch (e) {}
+}
+
+async function populateDeleteChapterSelect() {
+  const select = document.getElementById('delete-chapter-select');
+  select.innerHTML = '<option value="">Select Chapter to Delete</option>';
+  try {
+    const res = await fetch(`/api/chapters?subjectId=${subjectId}`);
+    const chapters = await res.json();
+    chapters.forEach(ch => {
+      const opt = document.createElement('option');
+      opt.value = ch._id;
+      opt.textContent = ch.title;
+      select.appendChild(opt);
+    });
+  } catch (e) {}
+}
+
+async function populateDeleteLectureChapterSelect() {
+  const select = document.getElementById('delete-lecture-chapter');
+  select.innerHTML = '<option value="">Select Chapter</option>';
+  try {
+    const res = await fetch(`/api/chapters?subjectId=${subjectId}`);
+    const chapters = await res.json();
+    chapters.forEach(ch => {
+      const opt = document.createElement('option');
+      opt.value = ch._id;
+      opt.textContent = ch.title;
+      select.appendChild(opt);
+    });
+  } catch (e) {}
+}
+
+async function updateDeleteLectureOptions() {
+  const chapterId = document.getElementById('delete-lecture-chapter').value;
+  const select = document.getElementById('delete-lecture-select');
+  select.innerHTML = '<option value="">Select Lecture to Delete</option>';
+  if (!chapterId) return;
+  try {
+    const res = await fetch(`/api/lectures?chapterId=${chapterId}`);
+    const lectures = await res.json();
+    lectures.forEach(lec => {
+      const opt = document.createElement('option');
+      opt.value = lec._id;
+      opt.textContent = lec.title;
+      select.appendChild(opt);
+    });
+  } catch (e) {}
+}
+
+async function executeManageAction() {
+  if (!token) {
+    alert("Please login as admin first");
+    hideManageModal();
+    return;
+  }
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+
+  try {
+    if (manageMode === 1) {
+      const title = document.getElementById('chapter-title').value.trim();
+      if (!title) return alert("Chapter title is required");
+      await fetch('/api/chapters', { method: 'POST', headers, body: JSON.stringify({ subjectId, title, order: Date.now() }) });
+    }
+    else if (manageMode === 2) {
+      const title = document.getElementById('lecture-title').value.trim();
+      const chapterId = document.getElementById('lecture-chapter-select').value;
+      if (!title || !chapterId) return alert("Title and Chapter are required");
+      const newLecture = {
+        subjectId, chapterId, title,
+        date: document.getElementById('lecture-date').value || new Date().toLocaleDateString('en-GB'),
+        duration: document.getElementById('lecture-duration').value || "45m",
+        youtubeId: document.getElementById('lecture-youtube').value.trim(),
+        imageUrl: document.getElementById('lecture-image').value.trim()
+      };
+      await fetch('/api/lectures', { method: 'POST', headers, body: JSON.stringify(newLecture) });
+    }
+    else if (manageMode === 3) {
+      const chapterId = document.getElementById('delete-chapter-select').value;
+      if (!chapterId || !confirm("Delete this chapter?")) return;
+      await fetch(`/api/chapters/${chapterId}`, { method: 'DELETE', headers });
+    }
+    else if (manageMode === 4) {
+      const lectureId = document.getElementById('delete-lecture-select').value;
+      if (!lectureId || !confirm("Delete this lecture?")) return;
+      await fetch(`/api/lectures/${lectureId}`, { method: 'DELETE', headers });
+    }
+    hideManageModal();
+    loadData();
+  } catch (err) {
+    console.error(err);
+    alert("Action failed");
+  }
+}
+
+// Initialize
 window.onload = loadData;
 </script>
 </body>
