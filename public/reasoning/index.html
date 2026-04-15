@@ -8,22 +8,67 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; }
-    .chapter-item:hover { background-color: #f8fafc; }
-    .active-chapter { background-color: #f0f9ff; border-left: 4px solid #3b82f6; }
     .lecture-card { transition: all 0.3s ease; }
     .lecture-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+
+    /* Mobile Sidebar Animation */
+    .sidebar {
+      transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        bottom: 0;
+        z-index: 100;
+        width: 280px;
+        box-shadow: 4px 0 15px rgba(0,0,0,0.2);
+      }
+      .sidebar.open {
+        transform: translateX(280px);
+      }
+      .main-content { padding-bottom: 20px; }
+    }
   </style>
 </head>
 <body class="bg-gray-50">
 
-<div class="flex h-screen">
+<!-- Overlay for mobile menu -->
+<div id="overlay" onclick="toggleSidebar()" 
+     class="hidden fixed inset-0 bg-black/50 z-50 md:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+
   <!-- Sidebar -->
-  <div class="w-72 bg-white border-r border-gray-200 overflow-y-auto" id="sidebar"></div>
-  
+  <div class="sidebar w-72 bg-white border-r border-gray-200 overflow-y-auto" id="sidebar">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-8 md:hidden">
+        <a href="/subjects.html" class="flex items-center gap-2 text-xl font-semibold text-gray-800">
+          ← Subjects
+        </a>
+        <button onclick="toggleSidebar()" class="text-2xl text-gray-500">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <div class="px-6 py-4 text-xs font-medium text-gray-500">CHAPTERS</div>
+      <div class="px-3 space-y-0.5" id="chapters-list"></div>
+    </div>
+  </div>
+
   <!-- Main Content -->
-  <div class="flex-1 flex flex-col overflow-hidden">
-    <div class="bg-white border-b px-8 py-5 flex justify-between items-center">
-      <h1 class="text-2xl font-semibold" id="subject-title">All Classes</h1>
+  <div class="flex-1 flex flex-col overflow-hidden main-content">
+    <!-- Top Bar -->
+    <div class="bg-white border-b px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <!-- Hamburger Menu -->
+        <button onclick="toggleSidebar()" class="md:hidden text-3xl text-gray-700">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <h1 class="text-2xl font-semibold" id="subject-title">All Classes</h1>
+      </div>
+
       <button onclick="showManageModal()" 
               class="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-medium">
         <i class="fa-solid fa-plus"></i> Manage
@@ -31,7 +76,7 @@
     </div>
 
     <!-- Search + Filters -->
-    <div class="bg-white border-b px-8 py-4 flex gap-4 items-center">
+    <div class="bg-white border-b px-4 py-4 flex gap-4 items-center">
       <div class="relative flex-1">
         <input type="text" id="search-input" placeholder="Search lectures by title..." 
                onkeyup="applyFilters()" 
@@ -46,12 +91,12 @@
       </select>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-8" id="main-content"></div>
+    <div class="flex-1 overflow-y-auto p-4 md:p-8" id="main-content"></div>
   </div>
 </div>
 
 <!-- Manage Modal -->
-<div id="manage-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+<div id="manage-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
   <div class="bg-white rounded-3xl p-8 w-full max-w-lg mx-4">
     <h2 class="text-2xl font-semibold mb-6">Manage Content</h2>
     
@@ -94,8 +139,8 @@
 </div>
 
 <!-- Admin Login Modal -->
-<div id="loginModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
-  <div class="bg-white rounded-3xl p-8 w-full max-w-sm mx-4">
+<div id="loginModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4">
+  <div class="bg-white rounded-3xl p-8 w-full max-w-sm">
     <h3 class="text-xl font-semibold mb-4">Admin Login</h3>
     <p class="text-gray-600 mb-6">Default Password: <strong>admin123</strong></p>
     <input type="password" id="adminPass" placeholder="Enter password" class="w-full border border-gray-300 rounded-2xl px-5 py-4 mb-6">
@@ -109,7 +154,7 @@
 <script>
 // ============== CONFIGURATION ==============
 const urlParams = new URLSearchParams(window.location.search);
-const subjectId = "reasoning";   // ← CHANGE THIS for each subject
+const subjectId = "reasoning";   // ← CHANGE THIS
 const subjectName = urlParams.get('subjectName') || 'Reasoning';
 
 document.getElementById('subject-title').textContent = subjectName;
@@ -119,6 +164,14 @@ let manageMode = 1;
 let token = null;
 let isAdmin = false;
 let allLectures = [];
+
+// Toggle Sidebar (Hamburger Menu)
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('hidden');
+}
 
 // ============== LOAD DATA ==============
 async function loadData() {
@@ -146,20 +199,20 @@ async function loadData() {
 }
 
 function renderSidebar(chapters) {
-  const sidebar = document.getElementById('sidebar');
-  let html = `
-    <div class="p-6">
-      <a href="/subjects.html" class="flex items-center gap-2 text-xl font-semibold text-gray-800">← Subjects</a>
-    </div>
-    <div class="px-6 py-4 text-xs font-medium text-gray-500">CHAPTERS</div>
-    <div class="px-3 space-y-0.5">`;
+  const container = document.getElementById('chapters-list') || document.createElement('div');
+  container.innerHTML = '';
 
   chapters.forEach(ch => {
     const active = ch._id === currentChapterId ? 'active-chapter' : 'chapter-item';
-    html += `<div class="${active} px-4 py-3 text-sm cursor-pointer hover:bg-gray-100" onclick="selectChapter('${ch._id}')">${ch.title}</div>`;
+    const div = document.createElement('div');
+    div.className = `${active} px-4 py-3 text-sm cursor-pointer hover:bg-gray-100`;
+    div.textContent = ch.title;
+    div.onclick = () => {
+      selectChapter(ch._id);
+      if (window.innerWidth < 768) toggleSidebar(); // Close sidebar on mobile after selection
+    };
+    container.appendChild(div);
   });
-  html += `</div>`;
-  sidebar.innerHTML = html;
 }
 
 function renderLectures(lectures) {
@@ -191,7 +244,6 @@ function renderLectures(lectures) {
             </button>
           </div>
 
-          <!-- Smaller Horizontal Buttons -->
           <div class="flex gap-3 mt-5">
             <button onclick="playVideo('${lec.youtubeId || ''}')" 
                     class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-2xl text-sm font-medium flex items-center justify-center gap-2">
@@ -209,7 +261,6 @@ function renderLectures(lectures) {
   container.innerHTML = html;
 }
 
-// Working Search + Filter
 function applyFilters() {
   const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
   const filterType = document.getElementById('filter-select').value;
@@ -256,7 +307,7 @@ function selectChapter(chapterId) {
   loadData();
 }
 
-// ============== MANAGE MODAL ==============
+// ============== MANAGE MODAL FUNCTIONS (unchanged) ==============
 function showManageModal() {
   if (!isAdmin) {
     document.getElementById('loginModal').classList.remove('hidden');
